@@ -2,7 +2,11 @@ import mongoose from "mongoose";
 
 const jobCategorySchema = new mongoose.Schema({
   name: { type: String, required: true },
-  parentCategory: { type: mongoose.Schema.Types.ObjectId, ref: "JobCategory" },
+  parentCategoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "JobCategory",
+    default: null,
+  },
 });
 
 export default mongoose.model("JobCategory", jobCategorySchema);
