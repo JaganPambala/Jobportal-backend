@@ -1,10 +1,7 @@
-import User from "../models/User.js";
+import User from "../../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {
-  registerValidation,
-  loginValidation,
-} from "../validations/authValidation.js";
+import { registerValidation, loginValidation } from "../../utils/authValidations.js";
 import config from "config";
 
 export const register = async (req, res) => {
@@ -26,10 +23,11 @@ export const register = async (req, res) => {
     role: null,
   });
 
-  res.json({ message: "User registered", user });
+  res.json({ message: "User registered. Please verify with OTP", email:user.email });
 };
 
 export const login = async (req, res) => {
+
   const { error } = loginValidation.validate(req.body);
   if (error) return res.status(400).json({ message: error.details[0].message });
 

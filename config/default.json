@@ -1,0 +1,15 @@
+{
+  "mongoURI": "mongodb+srv://jaganpambala_db_user:RG4MfCCgwSBa4kiX@cluster0.9adcy85.mongodb.net/JobPortal",
+  "jwtSecret": "supersecretkey123",
+  "tokenExpiry": "7d",
+   "email": {
+    "smtp": {
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "secure": false,
+      "user": "jaganpambala@gmail.com",
+      "password": "fdhk pbgj dxfm xfsj"
+    },
+    "from": "Jobportal <jaganpambala@gmail.com>"
+  }
+}
