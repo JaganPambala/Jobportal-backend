@@ -4,9 +4,9 @@ import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-// import employeeRoutes from "./routes/employeeRoutes.js";
-// import employerRoutes from "./routes/employerRoutes.js";
-// import jobRoutes from "./routes/jobRoutes.js";
+import employeeRoutes from "./routes/employeeRoutes.js";
+import employerRoutes from "./routes/employerRoutes.js";
+import jobRoutes from "./routes/jobRoutes.js";
 // import applicationRoutes from "./routes/applicationRoutes.js";
 import otpRoutes from "./routes/OTPRoutes.js"
 
@@ -20,9 +20,9 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/otp", otpRoutes);
-// app.use("/employee", employeeRoutes);
-// app.use("/employer", employerRoutes);
-// app.use("/job", jobRoutes);
+app.use("/employee", employeeRoutes);
+app.use("/employer", employerRoutes);
+app.use("/job", jobRoutes);
 // app.use("/apply", applicationRoutes);
 
 const PORT = 5000;

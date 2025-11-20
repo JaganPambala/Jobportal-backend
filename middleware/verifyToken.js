@@ -8,6 +8,7 @@ export const verifyToken = (req, res, next) => {
   const token = header.split(" ")[1];
   try {
     const decoded = jwt.verify(token, config.get("jwtSecret"));
+    console.log("Decoded token:", decoded);
     req.user = decoded;
     next();
   } catch {
