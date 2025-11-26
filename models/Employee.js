@@ -25,6 +25,22 @@ const employeeSchema = new mongoose.Schema({
   resumeUrl: String,
   photoUrl: String,
 
+  // ✅ Job Preferences
+  jobPreferences: {
+    selectedRoles: [String],        // UX Designer, Motion Designer etc.
+    selectedLocation: String,       // USA, Worldwide etc.
+    jobType: String,                // Any, Full-Time etc.
+    officeType: String,             // Remote, On-Site etc.
+  },
+
+  // ✅ Selected Categories
+  selectedCategories: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "JobCategory",
+    },
+  ],
+
   createdAt: { type: Date, default: Date.now },
 });
 

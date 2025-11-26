@@ -5,6 +5,7 @@ import {
   getMyEmployeeDetails,
   updateEmployeeDetails,
   deleteEmployeeDetails
+  , saveJobPreferences
 } from "../controller/employeeController.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
@@ -64,6 +65,8 @@ router.delete(
   verifyToken,
   verifyRole("employee"),
   deleteEmployeeDetails
-);
+); 
+
+router.patch("/preferences", verifyToken,  verifyRole("employee"), saveJobPreferences);
 
 export default router;

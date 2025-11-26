@@ -2,6 +2,12 @@ import express from "express";
 import {
   createJob,
   getJobs,
+  getFeaturedJobs,
+  getPopularJobs,
+  getTrendingJobs,
+  getRecommendedJobs,
+  searchJobs,
+  getJobsByCategory,
   getEmployerJobs,
   getJobById,
   updateJob,
@@ -13,11 +19,17 @@ import { verifyRole } from "../middleware/verifyRole.js";
 
 const router = express.Router();
 
-// ----- PUBLIC ROUTES -----
-router.get("/", getJobs);         
-router.get("/:id", getJobById);   
+// ----- PUBLIC ROUTES (GET) -----
+router.get("/featured", getFeaturedJobs);        // /jobs/featured
+router.get("/popular", getPopularJobs);          // /jobs/popular
+router.get("/trending", getTrendingJobs);        // /jobs/trending
+router.get("/recommended", getRecommendedJobs);  // /jobs/recommended
+router.get("/search", searchJobs);               // /jobs/search
+router.get("/by-category/:id", getJobsByCategory); // /jobs/by-category/:id
+router.get("/", getJobs);                        // /jobs (paginated)
+router.get("/:id", getJobById);                  // /jobs/:id (single job detail)
 
-// ----- EMPLOYER ROUTES -----
+// ----- EMPLOYER ROUTES (WRITE) -----
 router.post(
   "/",
   verifyToken,
@@ -42,8 +54,8 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  verifyRole("Employer"),        
-    deleteJob
+  verifyRole("employer"),        
+  deleteJob
 );
 
 export default router;

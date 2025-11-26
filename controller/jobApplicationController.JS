@@ -18,6 +18,8 @@ export const applyJob = async (req, res) => {
       employeeId,
       message: req.body.message || ""
     });
+ // Increment total applicants count in Job model
+     await Job.findByIdAndUpdate(jobId, { $inc: { totalApplicants: 1 } });
 
     await application.save();
 

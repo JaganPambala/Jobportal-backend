@@ -100,3 +100,51 @@ export const deleteEmployeeDetails = async (req, res) => {
     res.status(500).json({ message: "Error deleting employee profile", error: err });
   }
 };
+
+
+export const saveJobPreferences = async (req, res) => {
+  try {
+    const userId = req.user.id; // from token
+    const { selectedRoles, selectedLocation, jobType, officeType } = req.body;
+
+    let employee = await EmployeeDetails.findOne({ userId });
+
+    if (!employee) {
+      // Create a new employee profile if not exists
+      employee = new EmployeeDetails({ userId });
+    }
+
+    employee.jobPreferences = {
+      selectedRoles,
+      selectedLocation,
+      jobType,
+      officeType,
+    };
+
+    await employee.save();
+
+    res.json({
+      message: "Job preferences saved successfully",
+      jobPreferences: employee.jobPreferences,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// fetch employee preferences
+export const getEmployeePreferences = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const employee = await EmployeeDetails.findOne({ userId });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee profile not found" });
+    }
+
+    res.json(employee.jobPreferences || {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
