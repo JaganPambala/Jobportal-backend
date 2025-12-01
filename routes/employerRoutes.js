@@ -3,7 +3,8 @@ import {
   createEmployerDetails,
   getEmployerDetails,
   updateEmployerDetails,
-  deleteEmployerDetails
+  deleteEmployerDetails,
+  getMyEmployerDetails
 } from "../controller/employerController.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
@@ -48,5 +49,15 @@ router.delete(
   verifyRole("employer"),
   deleteEmployerDetails
 );
+
+
+
+router.get(
+  "/me",
+  verifyToken,
+  verifyRole("employer"),
+  getMyEmployerDetails
+);
+
 
 export default router;

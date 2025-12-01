@@ -86,3 +86,23 @@ export const deleteEmployerDetails = async (req, res) => {
     res.status(500).json({ message: "Error deleting employer details", error: err });
   }
 };
+
+
+export const getMyEmployerDetails = async (req, res) => {
+  try {
+    const userId = req.user.id; // from token
+
+    const employer = await EmployerDetails.findOne({ userId });
+
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    res.json({
+      message: "Employer details fetched successfully",
+      employer,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

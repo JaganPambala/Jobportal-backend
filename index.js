@@ -17,6 +17,9 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
+import path from 'path';
+// Serve uploaded files (avatars/resumes)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Routes
 app.use("/auth", authRoutes);

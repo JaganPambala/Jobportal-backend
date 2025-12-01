@@ -36,8 +36,8 @@ router.get(
   getEmployerJobApplications
 );
 
-// Employer updates application status
-router.put(
+// Employer updates application status (partial update - PATCH)
+router.patch(
   "/status/:applicationId",
   verifyToken,
   verifyRole("employer"),

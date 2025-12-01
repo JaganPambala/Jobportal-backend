@@ -6,10 +6,18 @@ import {
   updateEmployeeDetails,
   deleteEmployeeDetails
   , saveJobPreferences
+  , patchEmployeeMe
+  , uploadEmployeeAvatar
+  , uploadEmployeeResume
+  , deleteEmployeeResume
+  , addEducation
+  , updateEducation
+  , deleteEducation
 } from "../controller/employeeController.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyRole } from "../middleware/verifyRole.js";
+import { avatarUpload, resumeUpload } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -41,6 +49,61 @@ router.get(
   verifyToken,
   verifyRole("employee"),
   getMyEmployeeDetails
+);
+
+// PATCH /employee/me
+router.patch(
+  "/me",
+  verifyToken,
+  verifyRole("employee"),
+  patchEmployeeMe
+);
+
+// file upload endpoints - use multer middleware from upload.js (already imported above)
+
+router.post(
+  "/me/avatar",
+  verifyToken,
+  verifyRole("employee"),
+  avatarUpload.single('avatar'),
+  uploadEmployeeAvatar
+);
+
+router.post(
+  "/me/resume",
+  verifyToken,
+  verifyRole("employee"),
+  resumeUpload.single('resume'),
+  uploadEmployeeResume
+);
+
+router.delete(
+  "/me/resume",
+  verifyToken,
+  verifyRole("employee"),
+  deleteEmployeeResume
+);
+
+// education CRUD
+router.post(
+  "/me/education",
+  verifyToken,
+  verifyRole("employee"),
+  addEducation
+);
+
+router.patch(
+  "/me/education/:eduId",
+  verifyToken,
+  verifyRole("employee"),
+  updateEducation
+);
+
+router.delete(
+  "/me/education/:eduId",
+  verifyToken,
+  verifyRole("employee"),
+  deleteEducation
 );
 
 /**

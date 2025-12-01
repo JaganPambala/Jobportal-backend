@@ -3,6 +3,7 @@ import Job from "../models/Job.js";
 import JobCategory from "../models/Job_Category.js";
 import user from "../models/user.js";
 import EmployerDetails from "../models/Employeer.js";
+import JobApplication from "../models/Job_Application.js";
 
 // CREATE JOB (Employer only)
 export const createJob = async (req, res) => {
@@ -386,6 +387,96 @@ export const getEmployerJobs = async (req, res) => {
 };
 
 
+// GET MY JOBS (Employer only) - /jobs/my-jobs
+export const getMyJobs = async (req, res) => {
+  try {
+    const userId = req.user.id; // from auth middleware
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    // Find employer profile for this user
+    const employerDetails = await EmployerDetails.findOne({ userId });
+    if (!employerDetails) {
+      return res.status(404).json({ message: "Employer profile not found. Create employer details first." });
+    }
+
+    const query = { employerId: employerDetails._id };
+    const total = await Job.countDocuments(query);
+
+    // fetch jobs for this employer (paged)
+    const jobs = await Job.find(query)
+      .populate({
+        path: "employerId",
+        select: "companyName companyLogo companyWebsite companyProfile companyPhone",
+        populate: { path: "userId", select: "name email" },
+      })
+      .populate("categoryId", "name")
+      .sort({ postDate: -1 })
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum);
+
+    const jobIds = jobs.map(j => j._id);
+
+    // Aggregate application counts grouped by jobId and status
+    const agg = await JobApplication.aggregate([
+      { $match: { jobId: { $in: jobIds } } },
+      { $group: { _id: { jobId: "$jobId", status: "$status" }, count: { $sum: 1 } } }
+    ]);
+
+    // Build map: jobId => {total, Applied, Viewed, Shortlisted, Rejected}
+    const countsMap = {};
+    agg.forEach(item => {
+      const jid = item._id.jobId.toString();
+      if (!countsMap[jid]) countsMap[jid] = { total: 0, Applied: 0, Viewed: 0, Shortlisted: 0, Rejected: 0 };
+      countsMap[jid][item._id.status] = item.count;
+      countsMap[jid].total += item.count;
+    });
+
+    // Format response: include fields useful for managing jobs
+    const formatted = jobs.map(job => {
+      const jid = job._id.toString();
+      const counts = countsMap[jid] || { total: job.totalApplicants || 0, Applied: 0, Viewed: 0, Shortlisted: 0, Rejected: 0 };
+      const now = new Date();
+      let status = "Active";
+      if (!job.isActive) status = "Closed";
+      else if (job.expiryDate && job.expiryDate < now) status = "Expired";
+
+      return {
+        id: job._id,
+        title: job.title,
+        companyName: job.employerId?.companyName || "",
+        companyLogo: job.employerId?.companyLogo || null,
+        category: job.categoryId?.name || null,
+        location: job.location || null,
+        jobType: job.jobType || null,
+        salaryRange: job.salaryRange || null,
+        experienceRequired: job.experienceRequired || null,
+        postDate: job.postDate,
+        expiryDate: job.expiryDate || null,
+        viewCount: job.viewCount || 0,
+        totalApplicants: counts.total || job.totalApplicants || 0,
+        applicantsBreakdown: counts,
+        status,
+        isFeatured: job.isFeatured || false,
+      };
+    });
+
+    res.status(200).json({
+      jobs: formatted,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching my jobs", error: error.message });
+  }
+};
+
+
 //Get Job by ID (with view count increment)
 export const getJobById = async (req, res) => {
   try {
@@ -417,13 +508,17 @@ export const getJobById = async (req, res) => {
 
 export const updateJob = async (req, res) => {
   try {
-    const employerId = req.user.id;
+    const userId = req.user.id;
 
     const job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    if (job.employerId.toString() !== employerId) {
+    // verify the user owns this employer profile
+    const employerDetails = await EmployerDetails.findOne({ userId });
+    if (!employerDetails) return res.status(403).json({ message: "No employer profile for this user" });
+
+    if (job.employerId.toString() !== employerDetails._id.toString()) {
       return res.status(403).json({ message: "You can only update your own jobs" });
     }
 
@@ -445,13 +540,17 @@ export const updateJob = async (req, res) => {
 
 export const deleteJob = async (req, res) => {
   try {
-    const employerId = req.user.id;
+    const userId = req.user.id;
 
     const job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    if (job.employerId.toString() !== employerId) {
+    // verify the user owns this employer profile
+    const employerDetails = await EmployerDetails.findOne({ userId });
+    if (!employerDetails) return res.status(403).json({ message: "No employer profile for this user" });
+
+    if (job.employerId.toString() !== employerDetails._id.toString()) {
       return res.status(403).json({ message: "You can delete only your own jobs" });
     }
 
@@ -461,5 +560,39 @@ export const deleteJob = async (req, res) => {
     res.status(200).json({ message: "Job deleted (soft delete) successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting job", error });
+  }
+};
+
+
+// PATCH - Activate or deactivate a job (Employer only)
+export const setJobActivation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const jobId = req.params.id;
+
+    // validate input
+    if (typeof req.body.isActive === "undefined") {
+      return res.status(400).json({ message: "Request body must include isActive boolean" });
+    }
+
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    // verify the user owns this employer profile
+    const employerDetails = await EmployerDetails.findOne({ userId });
+    if (!employerDetails) return res.status(403).json({ message: "No employer profile for this user" });
+
+    if (job.employerId.toString() !== employerDetails._id.toString()) {
+      return res.status(403).json({ message: "You can only update your own jobs" });
+    }
+
+    // update only isActive and updatedAt for quick change
+    job.isActive = !!req.body.isActive; // coerce to boolean
+    job.updatedAt = new Date();
+    const updated = await job.save();
+
+    res.status(200).json({ message: `Job ${job.isActive ? 'activated' : 'deactivated'} successfully`, job: updated });
+  } catch (error) {
+    res.status(500).json({ message: "Error changing job activation", error: error.message });
   }
 };
