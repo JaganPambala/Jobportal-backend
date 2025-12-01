@@ -4,11 +4,22 @@ import {
   getEmployerDetails,
   updateEmployerDetails,
   deleteEmployerDetails,
-  getMyEmployerDetails
+  getMyEmployerDetails,
+  uploadEmployerLogo,
 } from "../controller/employerController.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyRole } from "../middleware/verifyRole.js";
+import { avatarUpload } from "../middleware/upload.js";
+
+// Multer error handler for uploads
+const handleMulterError = (err, req, res, next) => {
+  if (err) {
+    console.error('Multer error (employer):', err);
+    return res.status(400).json({ message: 'File upload error', error: err.message });
+  }
+  next();
+};
 
 const router = express.Router();
 
@@ -57,6 +68,18 @@ router.get(
   verifyToken,
   verifyRole("employer"),
   getMyEmployerDetails
+);
+
+
+// POST /me/logo - upload company logo
+router.post(
+  "/me/logo",
+  verifyToken,
+  verifyRole("employer"),
+  (req, res, next) => {
+    avatarUpload.single('logo')(req, res, (err) => handleMulterError(err, req, res, next));
+  },
+  uploadEmployerLogo
 );
 
 

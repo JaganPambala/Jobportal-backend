@@ -106,3 +106,32 @@ export const getMyEmployerDetails = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// POST /employer/me/logo - upload company logo
+export const uploadEmployerLogo = async (req, res) => {
+  try {
+    console.log('Employer logo upload - user:', req.user?.id);
+    console.log('File:', req.file);
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const logoUrl = `/uploads/avatars/${req.file.filename}`;
+
+    const updated = await EmployerDetails.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { companyLogo: logoUrl } },
+      { new: true, upsert: true }
+    );
+
+    if (!updated) {
+      return res.status(500).json({ message: 'Failed to update employer profile with logo' });
+    }
+
+    res.status(200).json({ message: 'Logo uploaded', logoUrl, employer: updated });
+  } catch (err) {
+    console.error('uploadEmployerLogo error:', err);
+    res.status(500).json({ message: 'Error uploading logo', error: err.message });
+  }
+};

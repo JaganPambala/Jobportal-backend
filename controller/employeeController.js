@@ -1,3 +1,23 @@
+// PATCH /employee/me/skills - update only the skills array
+export const updateEmployeeSkills = async (req, res) => {
+  try {
+    const { skills } = req.body;
+    if (!Array.isArray(skills)) {
+      return res.status(400).json({ message: "Skills must be an array of strings" });
+    }
+    const updated = await EmployeeDetails.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { skills } },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ message: "Employee profile not found" });
+    }
+    res.json({ message: "Skills updated successfully", skills: updated.skills });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating skills", error: err.message });
+  }
+};
 import EmployeeDetails from "../models/Employee.js";
 import User from "../models/user.js";
 import fs from "fs";
@@ -148,12 +168,50 @@ export const uploadEmployeeAvatar = async (req, res) => {
 // POST /employee/me/resume - upload resume
 export const uploadEmployeeResume = async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    console.log('=== Resume Upload Debug ===');
+    console.log('User ID:', req.user?.id);
+    console.log('File object:', req.file);
+    console.log('File size:', req.file?.size);
+    console.log('File mimetype:', req.file?.mimetype);
+    console.log('File originalname:', req.file?.originalname);
+    
+    if (!req.file) {
+      return res.status(400).json({ 
+        message: 'No file uploaded',
+        debug: { hasFile: false, bodyKeys: Object.keys(req.body) }
+      });
+    }
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Unauthorized - no user in token' });
+    }
+
     const resumeUrl = `/uploads/resumes/${req.file.filename}`;
-    const updated = await EmployeeDetails.findOneAndUpdate({ userId: req.user.id }, { $set: { resumeUrl } }, { new: true, upsert: true });
-    res.json({ message: 'Resume uploaded', resumeUrl, employee: updated });
+    console.log('Saving resume URL:', resumeUrl);
+    
+    const updated = await EmployeeDetails.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { resumeUrl } },
+      { new: true, upsert: true }
+    );
+
+    if (!updated) {
+      return res.status(500).json({ message: 'Failed to update employee profile' });
+    }
+
+    console.log('Resume uploaded successfully');
+    res.status(200).json({ 
+      message: 'Resume uploaded successfully',
+      resumeUrl,
+      employee: updated
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Error uploading resume', error: err.message });
+    console.error('Resume upload error:', err);
+    res.status(500).json({ 
+      message: 'Error uploading resume', 
+      error: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 };
 

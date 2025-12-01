@@ -4,23 +4,33 @@ import {
   getEmployeeDetails,
   getMyEmployeeDetails,
   updateEmployeeDetails,
-  deleteEmployeeDetails
-  , saveJobPreferences
-  , patchEmployeeMe
-  , uploadEmployeeAvatar
-  , uploadEmployeeResume
-  , deleteEmployeeResume
-  , addEducation
-  , updateEducation
-  , deleteEducation
+  deleteEmployeeDetails,
+  saveJobPreferences,
+  patchEmployeeMe,
+  uploadEmployeeAvatar,
+  uploadEmployeeResume,
+  deleteEmployeeResume,
+  addEducation,
+  updateEducation,
+  deleteEducation,
+  updateEmployeeSkills
 } from "../controller/employeeController.js";
+const router = express.Router();
+
+
+
 
 import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyRole } from "../middleware/verifyRole.js";
 import { avatarUpload, resumeUpload } from "../middleware/upload.js";
 
-const router = express.Router();
 
+router.patch(
+  "/me/skills",
+  verifyToken,
+  verifyRole("employee"),
+  updateEmployeeSkills
+);
 /**
  * @route POST /api/employee/details
  * @desc Create employee profile
@@ -61,11 +71,25 @@ router.patch(
 
 // file upload endpoints - use multer middleware from upload.js (already imported above)
 
+// Multer error handler middleware
+const handleMulterError = (err, req, res, next) => {
+  if (err) {
+    console.error('Multer error:', err);
+    return res.status(400).json({ 
+      message: 'File upload error',
+      error: err.message 
+    });
+  }
+  next();
+};
+
 router.post(
   "/me/avatar",
   verifyToken,
   verifyRole("employee"),
-  avatarUpload.single('avatar'),
+  (req, res, next) => {
+    avatarUpload.single('avatar')(req, res, (err) => handleMulterError(err, req, res, next));
+  },
   uploadEmployeeAvatar
 );
 
@@ -73,7 +97,9 @@ router.post(
   "/me/resume",
   verifyToken,
   verifyRole("employee"),
-  resumeUpload.single('resume'),
+  (req, res, next) => {
+    resumeUpload.single('resume')(req, res, (err) => handleMulterError(err, req, res, next));
+  },
   uploadEmployeeResume
 );
 
