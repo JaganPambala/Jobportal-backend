@@ -64,15 +64,10 @@ export const getEmployeeApplications = async (req, res) => {
     const query = { employeeId: req.user.id };
     const allowedStatuses = ["Applied", "Viewed", "Shortlisted", "Rejected"];
     if (typeof status !== 'undefined') {
-      // support comma-separated or array status filters
-      const statuses = Array.isArray(status) ? status : String(status).split(",").map(s => s.trim()).filter(Boolean);
-      // validate each status
-      const invalid = statuses.filter(s => !allowedStatuses.includes(s));
-      if (invalid.length) {
-        return res.status(400).json({ message: 'Invalid status filter(s)', invalid, allowedStatuses });
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status filter', allowedStatuses });
       }
-      // use $in to match any of the provided statuses
-      query.status = { $in: statuses };
+      query.status = status;
     }
 
     // Populate job details and nested employer fields; select only required fields

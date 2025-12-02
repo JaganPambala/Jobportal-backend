@@ -16,6 +16,7 @@ import {
   updateEmployeeSkills
 } from "../controller/employeeController.js";
 const router = express.Router();
+import { getSavedJobs } from "../controller/savedJobController.js";
 
 
 
@@ -157,5 +158,8 @@ router.delete(
 ); 
 
 router.patch("/preferences", verifyToken,  verifyRole("employee"), saveJobPreferences);
+
+// Employee saved jobs
+// GET /employee/saved moved to /saved (savedJobRoutes.js)
 
 export default router;

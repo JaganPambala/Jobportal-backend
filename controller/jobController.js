@@ -387,6 +387,8 @@ export const getEmployerJobs = async (req, res) => {
 };
 
 
+
+
 // GET MY JOBS (Employer only) - /jobs/my-jobs
 export const getMyJobs = async (req, res) => {
   try {

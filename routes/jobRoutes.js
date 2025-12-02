@@ -15,6 +15,7 @@ import {
   updateJob,
   deleteJob
 } from "../controller/jobController.js";
+  import { saveJob, unsaveJob, checkSavedStatus } from '../controller/savedJobController.js';
 
 import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyRole } from "../middleware/verifyRole.js";
@@ -67,6 +68,12 @@ router.put(
   verifyRole("employer"),         
   updateJob
 );
+
+// Employee save/unsave job
+// save/unsave endpoints moved to savedJobRoutes.js
+
+// Check saved status for specific job for the current employee
+// checkSavedStatus endpoint moved to savedJobRoutes.js
 
 router.delete(
   "/:id",
