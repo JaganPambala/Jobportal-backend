@@ -274,10 +274,29 @@ export const updateEducation = async (req, res) => {
 
 export const deleteEducation = async (req, res) => {
   try {
+    console.log('=== Delete Education Debug ===');
     const { eduId } = req.params;
+    console.log('Education ID to delete:', eduId);  
+    if (!eduId) return res.status(400).json({ message: 'eduId param is required' });
+
     const employee = await EmployeeDetails.findOne({ userId: req.user.id });
     if (!employee) return res.status(404).json({ message: 'Employee profile not found' });
-    employee.education.id(eduId).remove();
+
+    const edu = employee.education.id(eduId);
+    if (!edu) {
+      return res.status(404).json({ message: 'Education entry not found' });
+    }
+
+   
+    employee.education = employee.education.filter(e => {
+      // handle both ObjectId and string comparisons
+      try {
+        return e._id.toString() !== eduId.toString();
+      } catch (ex) {
+        return e._id !== eduId;
+      }
+    });
+
     await employee.save();
     res.json({ message: 'Education deleted' });
   } catch (err) {
